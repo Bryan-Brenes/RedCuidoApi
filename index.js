@@ -70,11 +70,25 @@ app.get('/pruebaBase', (req, res) => {
  * si es administrador, personalAdministrativo, cliente 
  * o cuidador
  */
-app.post('/usuario/login', (req, res) => {
-    if (!req.body.email || !req.body.password) return res.send({ error: -1, descripcion: "datos faltantes" })
-    var { email, password } = req.body; // variables para realizar la validacion
+app.post('/cliente/getPassword', (req, res) => {
+    if (!req.body.email) return res.send({ error: -1, descripcion: "datos faltantes" })
+    var { email } = req.body; // variables para realizar la validacion
 
-    res.send(`Email: ${email}, Pass: ${password}`);
+    poolConnect.then(() => {
+        const request = new sql.Request(pool);
+        request.query(`select Password from Cliente where Email='${email}'`, (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            console.log(result);
+            res.send(result.recordset);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
+
+    //res.send(`Email: ${email}, Pass: ${password}`);
 });
 
 /**
@@ -82,7 +96,7 @@ app.post('/usuario/login', (req, res) => {
  * Esta funcion es para enviar una solicitud de registro
  * que será aceptada por el personal administrativo
  */
-app.post('/usuario/registro', (req, res) => {
+app.post('/cliente/registro', (req, res) => {
     if (!name || !email || !password || !sex || !enfermedades || !direccion) return res.send({ error: -1, descripcion: "datos faltantes" })
     var { name, email, password, sex, enfermedades, direccion } = req.body;
     res.send(req.body);
@@ -96,9 +110,21 @@ app.post('/usuario/registro', (req, res) => {
  * Esta es para obtener toda la información del cliente para
  * mostrarla en la interfaz
  */
-app.get('/usuario/:email', (req, res) => {
+app.get('/cliente/:email', (req, res) => {
     var emailUsuario = req.params.email;
-    res.send(emailUsuario);
+    poolConnect.then(() => {
+        const request = new sql.Request(pool);
+        request.query(`select id, Email, Nombre, aprovado, sexo, direccion from Cliente where Email='${emailUsuario}'`, (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            console.log(result);
+            res.send(result.recordset);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
 });
 
 /**
