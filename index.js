@@ -376,7 +376,20 @@ app.post('/empleados', (req, res) => {
  * OBTENER CATEGORIAS
  */
 app.get('/categorias', (req, res) => {
-    res.send('Se obtuvo las categorias');
+    poolConnect.then(() => {
+        const request = new sql.Request(pool);
+        request.query("select * from Categoria", (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            console.log(result);
+            res.send(result.recordset);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
+    //res.send('Se obtuvo las categorias');
 })
 
 /**
@@ -384,7 +397,19 @@ app.get('/categorias', (req, res) => {
  */
 app.delete('/categorias/:id', (req, res) => {
     const idCategoria = req.params.id;
-    res.send(`se eliminó la categoria con el id ${idCategoria}`);
+    poolConnect.then(() => {
+        const request = new sql.Request(pool);
+        request.query(`delete from Categoria where id='${idCategoria}'`, (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            console.log(result);
+            res.send(result.recordset);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
 })
 
 /**
@@ -393,7 +418,19 @@ app.delete('/categorias/:id', (req, res) => {
 app.put('/categorias/:id', (req, res) => {
     const idCategoria = req.params.id;
     const {nombre, salarioCuidador, precioCliente} = req.body;
-    res.send(`se modificó ${idCategoria} con nombre: ${nombre}, salarioC: ${salarioCuidador}, precio: ${precioCliente}`)
+    poolConnect.then(() => {
+        const request = new sql.Request(pool);
+        request.query(`update Categoria set PrecioCliente='${precioCliente}', PagoCuidador='${salarioCuidador}', nombre='${nombre}' where id='${idCategoria}'`, (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            console.log(result);
+            res.send(result.recordset);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
 })
 
 /**
@@ -401,7 +438,20 @@ app.put('/categorias/:id', (req, res) => {
  */
 app.post('/categorias', (req, res) => {
     const {nombre, salarioCuidador, precioCliente} = req.body;
-    res.send(`se creó con nombre: ${nombre}, salarioC: ${salarioCuidador}, precio: ${precioCliente}`)
+    poolConnect.then(() => {
+        const request = new sql.Request(pool);
+        request.query(`Insert into Categoria(PrecioCliente, PagoCuidador,nombre) values('${precioCliente}', '${salarioCuidador}', '${nombre}')`, (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+            console.log(result);
+            res.send(result.recordset);
+        });
+    }).catch(err => {
+        console.log(err);
+    });
+    //res.send(`se creó con nombre: ${nombre}, salarioC: ${salarioCuidador}, precio: ${precioCliente}`)
 })
 
 //--------------------------------------------------------------------
