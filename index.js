@@ -35,7 +35,7 @@ app.use(express.json());
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*"); // update to match the domain you will make the request from
     res.header("Access-Control-Allow-Headers", "*");
-    if(req.method === 'OPTIONS'){
+    if (req.method === 'OPTIONS') {
         res.header('Access-Control-Allow-Methods', '*');
         return res.status(200).json({});
     }
@@ -83,6 +83,7 @@ app.post('/usuario/login', (req, res) => {
  * que será aceptada por el personal administrativo
  */
 app.post('/usuario/registro', (req, res) => {
+    if (!name || !email || !password || !sex || !enfermedades || !direccion) return res.send({ error: -1, descripcion: "datos faltantes" })
     var { name, email, password, sex, enfermedades, direccion } = req.body;
     res.send(req.body);
 });
@@ -111,6 +112,40 @@ app.get('/cuidador/top', (req, res) => {
 //--------------------------------------------------------------------
 // SERVICIOS
 //--------------------------------------------------------------------
+
+/**
+ * OBTENER TODOS LOS SERVICIOS DE UN CLIENTE
+ */
+app.get('/servicios/cliente/:idCliente', (req, res) => {
+    const idC = req.params.idCliente;
+    res.send(`Servicios de ${idC}`)
+})
+
+/**
+ * COMENTAR UN CUIDADOR
+ */
+app.put('/servicios/cuidador/comentar/:idCuidador', (req, res) => {
+    const idC = req.params.idCuidador;
+    const comentario = req.body.comentario;
+    res.send(`se comentó a ${idC} con: ${comentario}`)
+})
+
+/**
+ * PUNTUAR UN CUIDADOR
+ */
+app.put('/servicios/cuidador/puntuar/:idCuidador/:puntuacion', (req, res) => {
+    const idC = req.params.idCuidador;
+    const puntuacion = req.params.puntuacion;
+    res.send(`se puntuó a ${idC} con: ${puntuacion}`)
+})
+
+/**
+ * CANCELAR UN SERVICIO
+ */
+app.post('/servicios/cancelar', (req, res) => {
+    const idServicio = req.body.id;
+    res.send(`se canceló a ${idServicio}`)
+})
 
 /**
  * AGREGAR NUEVO TIPO SERVICIO
@@ -155,6 +190,218 @@ app.get('/servicios/tipo', (req, res) => {
     }).catch(err => {
         console.log(err);
     });
+})
+
+//--------------------------------------------------------------------
+// CUIDADOR
+//--------------------------------------------------------------------
+
+/**
+ * OBTENER CUIDADOR ESPECIFICO
+ */
+app.get('/cuidador/:id', (req, res) => {
+    const id = req.params.id;
+    res.send(`Se obtuvo la info del cuidador ${id}`);
+})
+
+/**
+ * OBTENER TODOS LOS SERVICIO DEL CUIDADOR
+ */
+app.get('/servicios/cuidador/:id', (req, res) => {
+    const id = req.params.id;
+    res.send(`Se obtuvo los servicios del cuidador ${id}`);
+})
+
+/**
+ * SOLICITAR MATERIAL POR CUIDADOR
+ */
+app.post('/servicios/cuidador/solicitarMaterial', (req, res) => {
+    const idCuidador = req.body.idCuidador;
+    const idMaterial = req.body.idMaterial;
+    const cantidad = req.body.cantidad;
+    res.send(`El cuidador ${idCuidador} solicitó ${cantidad} del material ${idMaterial}`)
+})
+
+//--------------------------------------------------------------------
+// PERSONAL ADMINISTRATIVO
+//--------------------------------------------------------------------
+
+/**
+ * OBTENER TODAS LAS SOLICITUDES DE REGISTRO
+ */
+app.get('/solicitudesRegistro', (req, res) => {
+    res.send('Se obtuvieron todas las solicitudes de registro');
+})
+
+/**
+ * APROBAR UNA SOLICITUD DE REGISTRO DE CLIENTES
+ */
+app.put('/solicitudesRegistro/aprobar/:id', (req, res) => {
+    const idSolicitud = req.params.id;
+    res.send(`Se aprobó la solicitud de registro ${idSolicitud}`);
+})
+
+/**
+ * APROBAR TODAS LAS SOLICITUDES DE REGISTRO DE CLIENTES
+ */
+app.put('/solicitudesRegistro/aprobar', (req, res) => {
+    res.send(`Se aprobó todas las solicitudes de registro`);
+})
+
+/**
+ * OBTENER SERVICIOS PENDIENTES DE PAGO
+ */
+app.get('/servicios/pendientesPago', (req, res) => {
+    res.send(`Se obtuvieron los servicios pendientes de pago`);
+})
+
+/**
+ * PAGAR SERVICIO
+ */
+app.put('/servicios/pagar/:id', (req, res) => {
+    const idServicio = req.params.id;
+    res.send(`Se pagó el servicio ${idServicio}`);
+})
+
+
+/**
+ * OBTENER TODOS LOS SERVICIOS
+ */
+app.get('/servicios', (req, res) => {
+    res.send(`Se obtuvo todos los servicios`);
+})
+
+/**
+ * OBTENER SOLICITUDES DE MATERIALES PENDIENTES
+ */
+app.get('/solicitudesMateriales', (req, res) => {
+    res.send(`Se obtuvo todas las solicitudes de materiales pendientes`);
+})
+
+/**
+ * APROBAR SOLICITUD DE MATERIALES PENDIENTES
+ */
+app.put('/solicitudesMateriales/:id', (req, res) => {
+    const idSolicitud = req.params.id;
+    res.send(`Se aprobó la solicitud de materiales pendientes ${idSolicitud}`);
+})
+
+/**
+ * OBTENER INVENTARIO MATERIALES
+ */
+app.get('/inventario', (req, res) => {
+    res.send('se obtuvo todos los materiales')
+})
+
+/**
+ * COMPRAR MATERIAL
+ */
+app.put('/inventario/comprar/:id/:cantidad', (req, res) => {
+    const idMaterial = req.params.id;
+    const cantidad = req.params.cantidad;
+    res.send(`se compro ${cantidad} de ${idMaterial}`)
+})
+
+//--------------------------------------------------------------------
+// ADMINISTRADOR
+//--------------------------------------------------------------------
+
+/**
+ * OBTENER TODAS LAS SUCURSALES
+ */
+app.get('/sucursales', (req, res) => {
+    res.send('Se obtuvo todas las sucursales')
+})
+
+/**
+ * DESHABILITAR SUCURSAL
+ */
+app.put('/sucursales/deshabilitar/:id', (req, res) => {
+    const idSucursal = req.params.id;
+    res.send(`Se deshabilitó la sucursal ${idSucursal}`);
+})
+
+/**
+ * CREAR SUCURSAL
+ */
+app.post('/sucursales', (req, res) => {
+    const nombre = req.body.nombre;
+    const dir = req.body.direccion;
+    res.send(`Se creo la sucursal ${nombre} con direccion: ${dir}`);
+})
+
+/**
+ * MODIFICAR SUCURSAL
+ */
+app.put('/sucursales/:id', (req, res) => {
+    const idSucursal = req.params.id;
+    const nombre = req.body.nombre;
+    const dir = req.body.direccion;
+    res.send(`Se modificó la sucursal ${idSucursal} con nombre: ${nombre} con direccion: ${dir}`);
+})
+
+/**
+ * OBTENER EMPLEADOS
+ */
+app.get('/empleados', (req, res) => {
+    res.send('se obtuvo todos los empleados');
+})
+
+/**
+ * DESHABILITAR EMPLEADO
+ */
+app.put('/empleados/deshabilitar/:id', (req, res) => {
+    const idEmpleado = req.params.id;
+    res.send(`Se deshabilitó el empleado ${idEmpleado}`);
+})
+
+ /**
+ * MODIFICAR EMPLEADO
+ */
+app.put('/empleados/:id', (req, res) => {
+    const idEmpleado = req.params.id;
+    // obtener los datos del body
+    res.send(`Se deshabilitó el empleado ${idEmpleado}`);
+})
+
+ /**
+ * CREAR EMPLEADO
+ */
+app.post('/empleados', (req, res) => {
+    const {nombre, puesto, email, password, sucursal, direccion} = req.body;
+    res.send(`Se deshabilitó el empleado ${idEmpleado}`);
+})
+
+/**
+ * OBTENER CATEGORIAS
+ */
+app.get('/categorias', (req, res) => {
+    res.send('Se obtuvo las categorias');
+})
+
+/**
+ * ELIMINAR CATEGORIA
+ */
+app.delete('/categorias/:id', (req, res) => {
+    const idCategoria = req.params.id;
+    res.send(`se eliminó la categoria con el id ${idCategoria}`);
+})
+
+/**
+ * MODIFICAR CATEGORIA
+ */
+app.put('/categorias/:id', (req, res) => {
+    const idCategoria = req.params.id;
+    const {nombre, salarioCuidador, precioCliente} = req.body;
+    res.send(`se modificó ${idCategoria} con nombre: ${nombre}, salarioC: ${salarioCuidador}, precio: ${precioCliente}`)
+})
+
+/**
+ * CREAR CATEGORIA
+ */
+app.post('/categorias', (req, res) => {
+    const {nombre, salarioCuidador, precioCliente} = req.body;
+    res.send(`se creó con nombre: ${nombre}, salarioC: ${salarioCuidador}, precio: ${precioCliente}`)
 })
 
 //--------------------------------------------------------------------
