@@ -33,30 +33,13 @@ pool.on('error', err => {
 app.use(express.json());
 
 app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*"); // update to match the domain you will make the request from
+    res.header("Access-Control-Allow-Origin", "*"); 
     res.header("Access-Control-Allow-Headers", "*");
     if (req.method === 'OPTIONS') {
         res.header('Access-Control-Allow-Methods', '*');
         return res.status(200).json({});
     }
     next();
-});
-
-app.get('/pruebaBase', (req, res) => {
-    poolConnect.then(() => {
-        console.log('Conectado');
-        const request = new sql.Request(pool);
-        request.query("Insert into TipoServicio(Descripcion) values('Adulto mayor')", (err, result) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
-            console.log(result);
-            res.send(result.recordset);
-        });
-    }).catch(err => {
-        console.log(err);
-    });
 });
 
 //--------------------------------------------------------------------
@@ -112,19 +95,9 @@ app.post('/cliente/registro', (req, res) => {
  */
 app.get('/cliente/:email', (req, res) => {
     var emailUsuario = req.params.email;
-    poolConnect.then(() => {
-        const request = new sql.Request(pool);
-        request.query(`select id, Email, Nombre, aprovado, sexo, direccion from Cliente where Email='${emailUsuario}'`, (err, result) => {
-            if(err) {
-                console.log(err);
-                return;
-            }
-            console.log(result);
-            res.send(result.recordset);
-        });
-    }).catch(err => {
-        console.log(err);
-    });
+    const request = new sql.Request(pool);
+    let result = request.input('email', sql.VarChar, emailUsuario).execute('sp_getClient');
+    res.send(result);
 });
 
 /**
@@ -148,12 +121,14 @@ app.get('/servicios/cliente/:idCliente', (req, res) => {
 })
 
 /**
- * COMENTAR UN CUIDADOR
+ * COMENTAR UN SERVICIO
  */
-app.put('/servicios/cuidador/comentar/:idCuidador', (req, res) => {
-    const idC = req.params.idCuidador;
+app.put('/servicios/cuidador/comentar/:idServicio', (req, res) => {
+    const idS = req.params.idServicio;
     const comentario = req.body.comentario;
-    res.send(`se comentó a ${idC} con: ${comentario}`)
+    const request = new sql.Request(pool);
+    let result = request.input('idServicio', sql.Int, idS).input('comentario', sql.VarChar, comentario).execute('sp_ComentarServicio');
+    res.send(result);
 })
 
 /**
@@ -170,7 +145,9 @@ app.put('/servicios/cuidador/puntuar/:idCuidador/:puntuacion', (req, res) => {
  */
 app.post('/servicios/cancelar', (req, res) => {
     const idServicio = req.body.id;
-    res.send(`se canceló a ${idServicio}`)
+    const request = new sql.Request(pool);
+    let result = request.input('idServicio', sql.Int, idServicio).execute('sp_CancelarServicio');
+    res.send(result);
 })
 
 /**
