@@ -33,7 +33,7 @@ pool.on('error', err => {
 app.use(express.json());
 
 app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*"); 
+    res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "*");
     if (req.method === 'OPTIONS') {
         res.header('Access-Control-Allow-Methods', '*');
@@ -60,7 +60,7 @@ app.post('/cliente/getPassword', (req, res) => {
     poolConnect.then(() => {
         const request = new sql.Request(pool);
         request.query(`select Password from Cliente where Email='${email}'`, (err, result) => {
-            if(err) {
+            if (err) {
                 console.log(err);
                 return;
             }
@@ -73,6 +73,14 @@ app.post('/cliente/getPassword', (req, res) => {
 
     //res.send(`Email: ${email}, Pass: ${password}`);
 });
+
+app.get('/login/:email', (req, res) => {
+    const email = req.params.email;
+    const request = new sql.Request(pool);
+    let result = request.input('email', sql.VarChar, email).execute('sp_LoginInfo').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+})
 
 /**
  * REGISTRO CLIENTES (SOLICITUD)
@@ -96,16 +104,20 @@ app.post('/cliente/registro', (req, res) => {
 app.get('/cliente/:email', (req, res) => {
     var emailUsuario = req.params.email;
     const request = new sql.Request(pool);
-    let result = request.input('email', sql.VarChar, emailUsuario).execute('sp_getClient');
-    res.send(result);
+    let result = request.input('email', sql.VarChar, emailUsuario).execute('sp_getClient').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 });
 
 /**
- * OBTENER INFO DE CUIDADORES
- * Devolver toda la info de los cuidadores
+ * OBTENER TOP DE CUIDADORES
+ * Devolver toda la info de los mejores cuidadores
  */
 app.get('/cuidador/top', (req, res) => {
-    res.send('Todos los cuidadores');
+    const request = new sql.Request(pool);
+    let result = request.execute('sp_TopCuidadores').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 });
 
 //--------------------------------------------------------------------
@@ -117,7 +129,10 @@ app.get('/cuidador/top', (req, res) => {
  */
 app.get('/servicios/cliente/:idCliente', (req, res) => {
     const idC = req.params.idCliente;
-    res.send(`Servicios de ${idC}`)
+    const request = new sql.Request(pool);
+    let result = request.input('idCliente', sql.Int, idC).execute('sp_GetService').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -127,27 +142,32 @@ app.put('/servicios/cuidador/comentar/:idServicio', (req, res) => {
     const idS = req.params.idServicio;
     const comentario = req.body.comentario;
     const request = new sql.Request(pool);
-    let result = request.input('idServicio', sql.Int, idS).input('comentario', sql.VarChar, comentario).execute('sp_ComentarServicio');
-    res.send(result);
+    let result = request.input('idServicio', sql.Int, idS).input('comentario', sql.VarChar, comentario).execute('sp_ComentarServicio').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
- * PUNTUAR UN CUIDADOR
+ * PUNTUAR UN SERVICIO
  */
-app.put('/servicios/cuidador/puntuar/:idCuidador/:puntuacion', (req, res) => {
-    const idC = req.params.idCuidador;
+app.put('/servicios/cuidador/puntuar/:idServicio/:puntuacion', (req, res) => {
+    const idS = req.params.idServicio;
     const puntuacion = req.params.puntuacion;
-    res.send(`se puntuó a ${idC} con: ${puntuacion}`)
+    const request = new sql.Request(pool);
+    let result = request.input('idServicio', sql.Int, idS).input('puntuacion', sql.TinyInt, puntuacion).execute('sp_PuntuarServicio').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
  * CANCELAR UN SERVICIO
  */
-app.post('/servicios/cancelar', (req, res) => {
-    const idServicio = req.body.id;
+app.put('/servicios/cancelar/:id', (req, res) => {
+    const idServicio = req.params.id;
     const request = new sql.Request(pool);
-    let result = request.input('idServicio', sql.Int, idServicio).execute('sp_CancelarServicio');
-    res.send(result);
+    let result = request.input('idServicio', sql.Int, idServicio).execute('sp_CancelarServicio').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -202,9 +222,23 @@ app.get('/servicios/tipo', (req, res) => {
 /**
  * OBTENER CUIDADOR ESPECIFICO
  */
-app.get('/cuidador/:id', (req, res) => {
-    const id = req.params.id;
-    res.send(`Se obtuvo la info del cuidador ${id}`);
+app.get('/cuidador/:email', (req, res) => {
+    const email = req.params.email;
+    const request = new sql.Request(pool);
+    let result = request.input('email', sql.VarChar, email).execute('sp_GetCuidador').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+})
+
+/**
+ * OBTENER COMENTARIOS DE CUIDADOR ESPECÍFICO
+ */
+app.get('/cuidador/comentarios/:idCuidador', (req, res) => {
+    const idCuidador = req.param.idCuidador;
+    const request = new sql.Request(pool);
+    let result = request.input('idCuidador', sql.Int, idCuidador).execute('sp_getComentarios').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -212,7 +246,10 @@ app.get('/cuidador/:id', (req, res) => {
  */
 app.get('/servicios/cuidador/:id', (req, res) => {
     const id = req.params.id;
-    res.send(`Se obtuvo los servicios del cuidador ${id}`);
+    const request = new sql.Request(pool);
+    let result = request.input('idCuidador', sql.Int, id).execute('sp_GetServiciosCuidador').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -222,7 +259,10 @@ app.post('/servicios/cuidador/solicitarMaterial', (req, res) => {
     const idCuidador = req.body.idCuidador;
     const idMaterial = req.body.idMaterial;
     const cantidad = req.body.cantidad;
-    res.send(`El cuidador ${idCuidador} solicitó ${cantidad} del material ${idMaterial}`)
+    const request = new sql.Request(pool);
+    let result = request.input('idMaterial', sql.Int, idMaterial).input('cantidad', sql.Int, cantidad).input('idCuidador', sql.Int, idCuidador).execute('sp_SolicitarMaterial').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 //--------------------------------------------------------------------
@@ -297,6 +337,29 @@ app.get('/inventario', (req, res) => {
 })
 
 /**
+ * NUEVO MATERIAL -- Revisar, falta actualizar inventario en BD
+ */
+app.post('/inventario', (req, res) => {
+    const nombre = req.body.nombre;
+    const cantidad = req.body.cantidad;
+    const request = new sql.Request(pool);
+    let result = request.input('descripcion', sql.VarChar, nombre).execute('sp_MaterialInsert').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+})
+
+/**
+ * BORRAR MATERIAL
+ */
+app.delete('/inventario/:id', (req, res) => {
+    const id = req.params.id;
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, id).execute('sp_MaterialDelete').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+})
+
+/**
  * COMPRAR MATERIAL
  */
 app.put('/inventario/comprar/:id/:cantidad', (req, res) => {
@@ -310,18 +373,47 @@ app.put('/inventario/comprar/:id/:cantidad', (req, res) => {
 //--------------------------------------------------------------------
 
 /**
+ * OBTENER SUCURSAL ESPECIFICA
+ */
+app.get('/sucursales/:id', (req, res) => {
+    const id = req.params.id;
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, id).execute('sp_CentroCuidoSelect').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+})
+
+/**
  * OBTENER TODAS LAS SUCURSALES
  */
 app.get('/sucursales', (req, res) => {
-    res.send('Se obtuvo todas las sucursales')
+
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, null).execute('sp_CentroCuidoSelect').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
  * DESHABILITAR SUCURSAL
  */
-app.put('/sucursales/deshabilitar/:id', (req, res) => {
+app.get('/sucursales/deshabilitar/:id', (req, res) => {
     const idSucursal = req.params.id;
-    res.send(`Se deshabilitó la sucursal ${idSucursal}`);
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, idSucursal).execute('sp_CentroCuidoDelete').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+})
+
+/**
+ * HABILITAR SUCURSAL
+ */
+app.get('/sucursales/habilitar/:id', (req, res) => {
+    const idSucursal = req.params.id;
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, idSucursal).execute('sp_HabilitarCentroCuido').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -330,7 +422,11 @@ app.put('/sucursales/deshabilitar/:id', (req, res) => {
 app.post('/sucursales', (req, res) => {
     const nombre = req.body.nombre;
     const dir = req.body.direccion;
-    res.send(`Se creo la sucursal ${nombre} con direccion: ${dir}`);
+    const request = new sql.Request(pool);
+    let result = request.input('Descripcion', sql.VarChar, nombre).input('Ubicacion', sql.VarChar, dir).input('habilitado', sql.Bit, 0).execute('sp_CentroCuidoInsert').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
+
 })
 
 /**
@@ -340,7 +436,11 @@ app.put('/sucursales/:id', (req, res) => {
     const idSucursal = req.params.id;
     const nombre = req.body.nombre;
     const dir = req.body.direccion;
-    res.send(`Se modificó la sucursal ${idSucursal} con nombre: ${nombre} con direccion: ${dir}`);
+    const estado = req.body.estado;
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, idSucursal).input('Descripcion', sql.VarChar, nombre).input('Ubicacion', sql.VarChar, dir).input('habilitado', sql.Bit, estado).execute('sp_CentroCuidoUpdate').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -358,20 +458,20 @@ app.put('/empleados/deshabilitar/:id', (req, res) => {
     res.send(`Se deshabilitó el empleado ${idEmpleado}`);
 })
 
- /**
- * MODIFICAR EMPLEADO
- */
+/**
+* MODIFICAR EMPLEADO
+*/
 app.put('/empleados/:id', (req, res) => {
     const idEmpleado = req.params.id;
     // obtener los datos del body
     res.send(`Se deshabilitó el empleado ${idEmpleado}`);
 })
 
- /**
- * CREAR EMPLEADO
- */
+/**
+* CREAR EMPLEADO
+*/
 app.post('/empleados', (req, res) => {
-    const {nombre, puesto, email, password, sucursal, direccion} = req.body;
+    const { nombre, puesto, email, password, sucursal, direccion } = req.body;
     res.send(`Se deshabilitó el empleado ${idEmpleado}`);
 })
 
@@ -382,7 +482,7 @@ app.get('/categorias', (req, res) => {
     poolConnect.then(() => {
         const request = new sql.Request(pool);
         request.query("select * from Categoria", (err, result) => {
-            if(err) {
+            if (err) {
                 console.log(err);
                 return;
             }
@@ -403,7 +503,7 @@ app.delete('/categorias/:id', (req, res) => {
     poolConnect.then(() => {
         const request = new sql.Request(pool);
         request.query(`delete from Categoria where id='${idCategoria}'`, (err, result) => {
-            if(err) {
+            if (err) {
                 console.log(err);
                 return;
             }
@@ -420,40 +520,22 @@ app.delete('/categorias/:id', (req, res) => {
  */
 app.put('/categorias/:id', (req, res) => {
     const idCategoria = req.params.id;
-    const {nombre, salarioCuidador, precioCliente} = req.body;
-    poolConnect.then(() => {
-        const request = new sql.Request(pool);
-        request.query(`update Categoria set PrecioCliente='${precioCliente}', PagoCuidador='${salarioCuidador}', nombre='${nombre}' where id='${idCategoria}'`, (err, result) => {
-            if(err) {
-                console.log(err);
-                return;
-            }
-            console.log(result);
-            res.send(result.recordset);
-        });
-    }).catch(err => {
-        console.log(err);
-    });
+    const { nombre, salarioCuidador, precioCliente } = req.body;
+    const request = new sql.Request(pool);
+    let result = request.input('id', sql.Int, idCategoria).input('nom', sql.VarChar, nombre).input('salarioC', sql.Money, salarioCuidador).input('precioC',sql.Money, precioCliente).execute('sp_CategoriaUpdate').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
  * CREAR CATEGORIA
  */
 app.post('/categorias', (req, res) => {
-    const {nombre, salarioCuidador, precioCliente} = req.body;
-    poolConnect.then(() => {
-        const request = new sql.Request(pool);
-        request.query(`Insert into Categoria(PrecioCliente, PagoCuidador,nombre) values('${precioCliente}', '${salarioCuidador}', '${nombre}')`, (err, result) => {
-            if(err) {
-                console.log(err);
-                return;
-            }
-            console.log(result);
-            res.send(result.recordset);
-        });
-    }).catch(err => {
-        console.log(err);
-    });
+    const { nombre, salarioCuidador, precioCliente } = req.body;
+    const request = new sql.Request(pool);
+    let result = request.input('nom', sql.VarChar, nombre).input('salarioC', sql.Money, salarioCuidador).input('precioC',sql.Money, precioCliente).execute('sp_CategoriaInsert').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
     //res.send(`se creó con nombre: ${nombre}, salarioC: ${salarioCuidador}, precio: ${precioCliente}`)
 })
 
@@ -523,8 +605,9 @@ app.get('/enfermedad/:id', (req, res) => {
 app.delete('/enfermedad/:id', (req, res) => {
     const id = req.params.id;
     const request = new sql.Request(pool);
-    let result = request.input('id', sql.Int, id).execute('sp_EnfermedadDelete');
-    res.send(result);
+    let result = request.input('id', sql.Int, id).execute('sp_EnfermedadDelete').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 /**
@@ -534,8 +617,9 @@ app.put('/enfermedad/:id', (req, res) => {
     const id = req.params.id;
     const descrip = req.body.descripcion;
     const request = new sql.Request(pool);
-    let result = request.input('id', sql.Int, id).input('Descripcion', sql.VarChar, descrip).execute('sp_EnfermedadUpdate');
-    res.send(result);
+    let result = request.input('id', sql.Int, id).input('Descripcion', sql.VarChar, descrip).execute('sp_EnfermedadUpdate').then((resu, err) => {
+        res.send(resu.recordset)
+    }).catch(err => console.log(err));
 })
 
 
